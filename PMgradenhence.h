@@ -21,10 +21,17 @@ public:
     void HistNormolize(Mat&pImg, Mat&pNormImg);
     void panduan(Mat&A);
 
-    void pmgrad(Mat&A,Mat&A1,Mat&B,double k);
+    void pmgrad(Mat&A,Mat&A1,Mat&B,double k,double dt);
     void converttochar(Mat&A,Mat&B);
     void gradz(Mat&A,Mat&B);
     void gradu(Mat&A,Mat&B);
+
+    void diffusion(Mat &A, Mat &B,double max,double min);
+
+    void gradn(Mat &A,Mat &B,double*max,double*min);
+    void grads(Mat &A,Mat &B,double*max,double*min);
+    void gradw(Mat &A,Mat &B,double*max,double*min);
+    void grade(Mat &A,Mat &B,double*max,double*min);
 };
 
 #endif //PMGRADENHENCE_PMGRADENHENCE_H
