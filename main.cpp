@@ -110,7 +110,7 @@ void PMgradenhence::diffusion(Mat &A, Mat &B, double max, double min) {
         }
 }
 
-
+//直方图均衡化
 void PMgradenhence::HistNormolize(Mat &pImg, Mat &pNormImg) {
     int hist[256];
     double fpHist[256];
@@ -232,6 +232,32 @@ void PMgradenhence::pmgrad(Mat &src, Mat &src1, Mat &dst, double k, double dt) {
     return;
 }
 
+
+//计算一副图片的信息熵
+
+void PMgradenhence::shang(Mat &A, double result){
+    int hist[256];
+    int size;
+    double fpHist[256];
+    size = X_image*Y_image;
+    int h,w,i;
+    unsigned char tmp;
+    result = 0;
+    for(h = 0;h<Y_image;h++){
+        for(w = 0;w<X_image;w++){
+            tmp = A.at<tc>(h,w);
+            hist[tmp]++;
+        }
+    }
+    for( i = 0;i<256;i++){
+        fpHist[i] = (double)hist[i]/(double)size;
+    }
+    for(i = 0;i < 256;i++){
+        result += fpHist[i] + log(fpHist[i]);
+    }
+
+
+}
 
 void PMgradenhence::panduan(Mat &A) {
     int h, w;

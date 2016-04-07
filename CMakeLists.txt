@@ -3,7 +3,7 @@ project(PMgradenhence)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCE_FILES main.cpp PMgradenhence.h)
+set(SOURCE_FILES TVenhence.cpp TVenhence.h)
 
 find_package(OpenCV REQUIRED)
 add_executable(PMgradenhence ${SOURCE_FILES})

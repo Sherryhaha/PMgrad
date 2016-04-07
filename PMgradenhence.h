@@ -32,6 +32,7 @@ public:
     void grads(Mat &A,Mat &B,double*max,double*min);
     void gradw(Mat &A,Mat &B,double*max,double*min);
     void grade(Mat &A,Mat &B,double*max,double*min);
+    void shang(Mat &A, double result);
 };
 
 #endif //PMGRADENHENCE_PMGRADENHENCE_H
