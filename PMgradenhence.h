@@ -9,22 +9,24 @@
 #include <opencv2/highgui.hpp>
 #include <iostream>
 #include <math.h>
+#include <time.h>
 using namespace cv;
 using namespace std;
 
+typedef double ty;
+typedef uchar tc;
+#define Pi 3.14159265
+
 class PMgradenhence{
+
 public:
     int X_image,Y_image;
+    int Tchannel,row,col,perPixel,maxPixel;
 
-    void max_min_grad(Mat&A,double*max,double*min);
-    void gradenhence(Mat&A,Mat&B);
     void HistNormolize(Mat&pImg, Mat&pNormImg);
-    void panduan(Mat&A);
 
     void pmgrad(Mat&A,Mat&A1,Mat&B,double k,double dt);
-    void converttochar(Mat&A,Mat&B);
-    void gradz(Mat&A,Mat&B);
-    void gradu(Mat&A,Mat&B);
+    void defineChar(Mat&A);
 
     void diffusion(Mat &A, Mat &B,double max,double min);
 
@@ -32,7 +34,10 @@ public:
     void grads(Mat &A,Mat &B,double*max,double*min);
     void gradw(Mat &A,Mat &B,double*max,double*min);
     void grade(Mat &A,Mat &B,double*max,double*min);
-    void shang(Mat &A, double result);
+    double Entropy(Mat &A);
+    void MeanStdEntropy(Mat &A,string name);
+
+
 };
 
 #endif //PMGRADENHENCE_PMGRADENHENCE_H

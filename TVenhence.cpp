@@ -160,7 +160,7 @@ int main() {
     TVenhence p;
     p.X_image = src.cols;
     p.Y_image = src.rows;
-    p.TVDenoising(src1,dst,20);
+//    p.TVDenoising(src1,dst,8);
     namedWindow("orig");
     imshow("orig", src1);
     namedWindow("result");

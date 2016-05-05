@@ -1,11 +1,5 @@
 #include "PMgradenhence.h"
 
-typedef double ty;
-typedef uchar tc;
-#define Pi 3.14159265
-
-
-
 
 void PMgradenhence::gradn(Mat &A, Mat &B, double *nmax, double *nmin)    //求N方向梯度
 {
@@ -24,6 +18,7 @@ void PMgradenhence::gradn(Mat &A, Mat &B, double *nmax, double *nmin)    //求N�
                 *nmin = fabs(tmp);
             }
         }
+    cout << *nmax << "--" << *nmin << endl;
 }
 
 void PMgradenhence::grads(Mat &A, Mat &B, double *smax, double *smin)    //求S方向梯度
@@ -43,6 +38,7 @@ void PMgradenhence::grads(Mat &A, Mat &B, double *smax, double *smin)    //求S�
                 *smin = fabs(tmp);
             }
         }
+    cout << *smax << "--" << *smin << endl;
 }
 
 void PMgradenhence::grade(Mat &A, Mat &B, double *emax, double *emin)    //求E方向梯度
@@ -62,6 +58,7 @@ void PMgradenhence::grade(Mat &A, Mat &B, double *emax, double *emin)    //求E�
                 *emin = fabs(tmp);
             }
         }
+    cout << *emax << "--" << *emin << endl;
 }
 
 void PMgradenhence::gradw(Mat &A, Mat &B, double *wmax, double *wmin)    //求W方向梯度
@@ -81,11 +78,13 @@ void PMgradenhence::gradw(Mat &A, Mat &B, double *wmax, double *wmin)    //求W�
                 *wmin = fabs(tmp);
             }
         }
+    cout << *wmax << "--" << *wmin << endl;
 }
 
 
-//求系数
-void PMgradenhence::diffusion(Mat &A, Mat &B, double max, double min) {
+
+void PMgradenhence::diffusion(Mat &A, Mat &B, double max, double min) //求扩散系数
+{
     int h, w;
     double k = 1;
     double tmp;
@@ -94,18 +93,26 @@ void PMgradenhence::diffusion(Mat &A, Mat &B, double max, double min) {
 //            B.at<ty>(h, w) = (1 - cos(((fabs(A.at<ty>(h, w))*fabs(A.at<ty>(h, w)) - min) / max - min) * Pi)) * (max / (2.0 * fabs(A.at<ty>(h, w))*fabs(A.at<ty>(h, w))));
 //                B.at<ty>(h, w) =
 //                        (1 - cos(((fabs(A.at<ty>(h, w)) - min) / max - min) * Pi)) * (max / (2.0 ));
-            tmp =
-                    (1 - cos(((fabs(A.at<ty>(h, w)) - min) / max - min) * Pi)) * (max / (2.0 * fabs(A.at<ty>(h, w))));
-            if(tmp > 0){
-                B.at<ty>(h, w) = tmp;
-            }
-            if(tmp == 0){
-                B.at<ty>(h,w) = exp(-6);
-            }
+            //赵建论文中的扩散系数
+//            tmp =
+//                    (1 - cos((((A.at<ty>(h, w)) - min) / max - min) * Pi)) * (max / (2.0 * (A.at<ty>(h, w))));
+            //结合前向扩散与后向扩散的系数
+            tmp = 1 / (1 + ((A.at<ty>(h, w)) / 40) * ((A.at<ty>(h, w)) / 40) * ((A.at<ty>(h, w)) / 40) *
+                           ((A.at<ty>(h, w)) / 40)) -
+                  0.25 / (1 + (((A.at<ty>(h, w)) - 80) / 20) * (((A.at<ty>(h, w)) - 80) / 20));
+
+//            if (tmp > 0) {
+//                B.at<ty>(h, w) = tmp;
+//            }
+//            if (tmp == 0) {
+//                B.at<ty>(h, w) = exp(-6);
+////                B.at<ty>(h, w) = A.at<ty>(h,w);
+//            }
+            B.at<ty>(h, w) = tmp;
 
 
 
-//            B.at<ty>(h, w) = 1 / ((abs(A.at<ty>(h, w)) / k) * (abs(A.at<ty>(h, w)) / k) + 1);
+//
 
         }
 }
@@ -154,6 +161,37 @@ void PMgradenhence::HistNormolize(Mat &pImg, Mat &pNormImg) {
     }
 }
 
+
+//计算图片的信息熵
+double PMgradenhence::Entropy(Mat &A) {
+    int En[256];
+    double fpEn[256];
+    double result, sum = 0, tmp;
+    int size = X_image * Y_image;
+    int i, j;
+    memset(&En, 0, sizeof(int) * 256);
+    memset(&fpEn, 0, sizeof(double) * 256);
+    for (i = 0; i < Y_image; i++) //计算差分矩阵直方图
+    {
+        for (j = 0; j < X_image; j++) {
+            tc GrayIndex = A.at<tc>(i, j);
+            En[GrayIndex]++;
+        }
+    }
+
+    for (i = 0; i < 256; i++)   // 计算灰度分布密度
+    {
+        fpEn[i] = (double) En[i] / (double) size;
+    }
+    for (i = 0; i < 256; i++) {
+        if (fpEn[i] > 0) {
+            tmp = log(fpEn[i]) / log(2);
+            sum = sum + fpEn[i] * tmp;
+        }
+    }
+    sum = -sum;
+    return sum;
+}
 
 //实现基于梯度场的增强，第一个参数是浮点图像，第二个是uchar类型图像
 void PMgradenhence::pmgrad(Mat &src, Mat &src1, Mat &dst, double k, double dt) {
@@ -212,7 +250,7 @@ void PMgradenhence::pmgrad(Mat &src, Mat &src1, Mat &dst, double k, double dt) {
 //                sum = iw * CW.at<ty>(h, w) + ie * CE.at<ty>(h, w);
                 sum = sum * dt;
 //                cout<<sum<<endl;
-                tmp = src.at<ty>(h, w) + sum + dt * k * (H1.at<ty>(h, w) - src.at<ty>(h, w));
+                tmp = dst.at<ty>(h, w) + sum + dt * k * (H1.at<ty>(h, w) - src.at<ty>(h, w));
 
                 dst.at<ty>(h, w) = tmp;
 
@@ -223,71 +261,59 @@ void PMgradenhence::pmgrad(Mat &src, Mat &src1, Mat &dst, double k, double dt) {
         }
     }
 
-//    for(h = 0;h < Y_image;h++){
-//        for(w = 0;w < X_image;w++){
-//            dst.at<ty>(h,w) = src.at<ty>(h,w);
-//        }
-//
-//    }
+
     return;
 }
 
 
-//计算一副图片的信息熵
-
-void PMgradenhence::shang(Mat &A, double result){
-    int hist[256];
-    int size;
-    double fpHist[256];
-    size = X_image*Y_image;
-    int h,w,i;
-    unsigned char tmp;
-    result = 0;
-    for(h = 0;h<Y_image;h++){
-        for(w = 0;w<X_image;w++){
-            tmp = A.at<tc>(h,w);
-            hist[tmp]++;
-        }
-    }
-    for( i = 0;i<256;i++){
-        fpHist[i] = (double)hist[i]/(double)size;
-    }
-    for(i = 0;i < 256;i++){
-        result += fpHist[i] + log(fpHist[i]);
-    }
-
-
-}
-
-void PMgradenhence::panduan(Mat &A) {
+void PMgradenhence::defineChar(Mat &A) {
     int h, w;
     for (h = 0; h < Y_image; h++) {
         for (w = 0; w < X_image; w++) {
-            if (A.at<ty>(h, w) < 0) {
-                cout << "小于0！" << endl;
+            if (A.at<tc>(h, w) < 0) {
+                cout << "小雨0" << endl;
                 return;
             }
-            if (A.at<ty>(h, w) > 1) {
-                cout << "大于255！" << endl;
+            if (A.at<tc>(h, w) > 100) {
+                cout << "daledale" << endl;
                 return;
             }
         }
     }
+}
+
+//计算并输出图像的均值，标准差，信息熵
+void PMgradenhence::MeanStdEntropy(Mat &A, string name) {
+    //计算图像信息熵
+    double entropy;
+    entropy = Entropy(A);
+
+    //计算图像方差与均值
+    Scalar mean;
+    Scalar stddev;
+
+    meanStdDev(A, mean, stddev);
+    ty mean_pxl = mean.val[0];
+    ty stddev_pxl = stddev.val[0];
+    cout << name << "均值：" << mean_pxl << " " + name << "的标准差：" << stddev_pxl << " " + name << "的信息熵：" << entropy <<
+    endl;
+    return;
 }
 
 int main() {
 
-    Mat src, src1, dst,Gdst;
+    Mat src, src1, Gdst, udist;
     PMgradenhence p;
     double segma;
-    string filename = "/Users/sunguoyan/Downloads/picture/ren.jpg";
+    string filename = "/Users/sunguoyan/Downloads/picture/lenazao.bmp";
 
     src = imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
     src.convertTo(src1, CV_64F, 1.0 / 255.0, 0);
     p.Y_image = src.rows;
     p.X_image = src.cols;
 
-    dst.create(src1.size(), src1.type());
+    Mat dst = src1.clone();
+//    dst.create(src1.size(), src1.type());
 
 //    测试转换到梯度场
 //    p.gradenhence(src1,dst);
@@ -298,15 +324,28 @@ int main() {
 //    进行梯度场结合偏微分方程增强
 //    王翠翠论文说dt<=0.25较理想
     double k, dt;
-    k = 8;
-    dt = 0.1;
+    k = 3;
+    dt = 0.2;
+    clock_t start, finish;
+    double totaltime;
+    start = clock();
 
     p.pmgrad(src1, src, dst, k, dt);
+
+    finish = clock();
+    totaltime = (double) (finish - start) / CLOCKS_PER_SEC;
+    cout << "pm增强程序的运行时间为" << totaltime << "s！" << endl;
+
+    dst.convertTo(udist, CV_8U, 255, 0);
+
+
+    p.MeanStdEntropy(src, "原图像");
+    p.MeanStdEntropy(udist, "增强后图像");
 
     namedWindow("test");
     imshow("test", src);
     namedWindow("result");
-    imshow("result", dst);
+    imshow("result", udist);
     waitKey(0);
     return 0;
 }
